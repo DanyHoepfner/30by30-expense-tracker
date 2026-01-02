@@ -3,7 +3,173 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Expense Tracker</title>
+    <style>
+      * {
+        padding: 0;
+      }
+      .transaction-form {
+        display: flex;
+        flex-direction: column;
+        width: 30%;
+        gap: 0.8rem;
+      }
+
+      #transactionsList > li {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+      }
+      #transactionsList {
+        border: 1px solid black;
+        width: 30%;
+        padding: 5px;
+      }
+
+      .delete-x {
+        color: red;
+        cursor: pointer;
+      }
+
+      .negative {
+        color: red;
+      }
+      .positive {
+        color: green;
+      }
+    </style>
   </head>
-  <body></body>
+  <body>
+    <h1>Expense Tracker</h1>
+    <p>
+      You are able to see your balance below. If you want to add a transaction,
+      please use the fields. Use positive numbers for income and negative
+      numbers for expenses.
+    </p>
+    <div><h2 id="balance">Balance:</h2></div>
+    <form class="transaction-form">
+      <div>
+        <label for="fTransaction">Transaction Name</label>
+        <input type="text" name="fTransaction" id="fTransaction" />
+      </div>
+      <div>
+        <label for="fAmount">Amount</label>
+        <input type="number" name="fAmount" id="fAmount" />
+      </div>
+
+      <input type="button" value="Add Transaction" id="addTBtn" />
+      <input type="button" value="Delete Transactions" id="deleteTBtn" />
+    </form>
+    <hr />
+    <h1>Transactions</h1>
+    <ul id="transactionsList"></ul>
+
+    <script>
+      // Variables
+      let transactions = getData();
+      const balance = document.getElementById("balance");
+      const fAmount = document.getElementById("fAmount");
+      const fTransaction = document.getElementById("fTransaction");
+      const transactionsList = document.getElementById("transactionsList");
+
+      updateUI(transactions);
+
+      document
+        .getElementById("addTBtn")
+        .addEventListener("click", addTransaction);
+
+      document
+        .getElementById("deleteTBtn")
+        .addEventListener("click", deleteTransactions);
+
+      function getData() {
+        const data = localStorage.getItem("transactionsData");
+        if (data) {
+          const transactions = JSON.parse(data);
+          return transactions;
+        } else {
+          return [];
+        }
+      }
+
+      function resetFormValues() {
+        fTransaction.value = "";
+        fAmount.value = "";
+      }
+
+      function deleteTransactions() {
+        window.localStorage.clear();
+        transactions = [];
+        updateUI(transactions);
+      }
+
+      function deleteEntry(index) {
+        transactions.splice(index, 1);
+        localStorage.setItem("transactionsData", JSON.stringify(transactions));
+        updateUI(transactions);
+      }
+
+      function updateUI(transactions) {
+        //calculates current Bank Balance
+        const currentBalance = transactions.reduce(
+          (accumulator, currentValue) => accumulator + currentValue.amount,
+          0
+        );
+
+        balance.innerText = `Balance: ${currentBalance}`;
+        if (currentBalance <= 0) {
+          balance.classList.remove("positive");
+          balance.classList.add("negative");
+        } else {
+          balance.classList.remove("negative");
+          balance.classList.add("positive");
+        }
+        transactionsList.innerHTML = "";
+
+        transactions.forEach((transaction, index) => {
+          const li = document.createElement("li");
+
+          const nameSpan = document.createElement("span");
+          nameSpan.textContent = transaction.name;
+
+          const amountSpan = document.createElement("span");
+          amountSpan.textContent = `${transaction.amount} €`;
+
+          const deleteSpan = document.createElement("span");
+          deleteSpan.textContent = "X";
+          deleteSpan.className = "delete-x";
+          deleteSpan.addEventListener("click", () => deleteEntry(index));
+
+          li.appendChild(nameSpan);
+          li.appendChild(amountSpan);
+          li.appendChild(deleteSpan);
+          transactionsList.appendChild(li);
+
+          console.log(index);
+        });
+      }
+      // addTransaction is called when the form-button is clicked
+      function addTransaction() {
+        const transactionName = fTransaction.value;
+        const transactionAmount = Number(fAmount.value);
+
+        // check if fiedls values are not empty
+        if (transactionAmount && transactionName) {
+          transactions.push({
+            name: transactionName,
+            amount: transactionAmount,
+          });
+
+          localStorage.setItem(
+            "transactionsData",
+            JSON.stringify(transactions)
+          );
+
+          // updates UI with the current value
+          updateUI(transactions);
+          resetFormValues();
+        }
+      }
+    </script>
+  </body>
 </html>
